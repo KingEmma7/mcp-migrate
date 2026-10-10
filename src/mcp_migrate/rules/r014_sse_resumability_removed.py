@@ -45,6 +45,8 @@ class SSEResumabilityRemoved(Rule):
         seen: set[tuple[str, int]] = set()
         out: list[Finding] = []
         surface = mcp_surface_paths(project)
+        # search_code keeps comment-only mentions of last_event_id from
+        # being mistaken for an implementation of resumability.
         # Header names live in strings, which search_code skips. Keep the
         # quotes so prose like "Last-Event-ID resumability was removed"
         # stays silent, and deduplicate lines that also name the identifier.
@@ -54,6 +56,8 @@ class SSEResumabilityRemoved(Rule):
         ):
             for f, line, text in search(pattern):
                 # Ordinary browser EventSource streams use this header too.
+                # Without this gate, invisible-playwright-mcp's /chat/events
+                # route took its pinned board grade from A/97 to C/72.
                 # Require independent MCP surface in the same file for the
                 # header alone; existing identifier findings stay unchanged.
                 if gated and f.path not in surface:
