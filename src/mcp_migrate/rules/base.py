@@ -523,6 +523,7 @@ MCP_SURFACE_RX = re.compile(
     r"|\bmcp\.server\b|\bmcp\.types\b|\bmcp\.client\b|\bfrom\s+mcp\b|\bimport\s+mcp\b"
     r"|\bmodelcontextprotocol\b"
     r"|\bjsonrpc\b"
+    r"|\bmcp-(?:session-id|protocol-version|method|name)\b"
     "|" + wire_method(
         "tools/call", "tools/list", "resources/read", "resources/list",
         "prompts/get", "prompts/list", "sampling/createMessage", "roots/list",

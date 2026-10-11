@@ -11,6 +11,18 @@ from mcp_migrate.scan import load_project
 MCP_CONTEXT = 'from mcp.server import Server\nserver = Server("demo")\n'
 
 
+@pytest.mark.parametrize("header", [
+    "Mcp-Session-Id", "MCP-Protocol-Version", "Mcp-Method", "mcp-name",
+])
+def test_python_header_with_hand_rolled_mcp_transport(tmp_path, header):
+    (tmp_path / "server.py").write_text(
+        f'context = request.headers.get("{header}")\n'
+        'cursor = request.headers.get("Last-Event-ID")\n'
+    )
+    findings = SSEResumabilityRemoved().check(load_project(tmp_path))
+    assert [(f.path.name, f.line) for f in findings] == [("server.py", 2)]
+
+
 @pytest.mark.parametrize("header", ["Last-Event-ID", "last-event-id"])
 @pytest.mark.parametrize("quote", ['"', "'"])
 @pytest.mark.parametrize("read", [

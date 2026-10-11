@@ -7,6 +7,18 @@ from mcp_migrate.scan import load_project
 MCP_CONTEXT = 'import { Server } from "@modelcontextprotocol/sdk/server/index.js";\n'
 
 
+@pytest.mark.parametrize("header", [
+    "Mcp-Session-Id", "MCP-Protocol-Version", "Mcp-Method", "mcp-name",
+])
+def test_typescript_header_with_hand_rolled_mcp_transport(tmp_path, header):
+    (tmp_path / "server.ts").write_text(
+        f'const context = req.headers.get("{header}");\n'
+        'const cursor = req.headers.get("Last-Event-ID");\n'
+    )
+    findings = SSEResumabilityRemoved().check(load_project(tmp_path).for_language("typescript"))
+    assert [(f.path.name, f.line) for f in findings] == [("server.ts", 2)]
+
+
 @pytest.mark.parametrize("same_file_context", [False, True])
 @pytest.mark.parametrize("header", ["last-event-id", "Last-Event-ID"])
 @pytest.mark.parametrize("quote", ['"', "'", "`"])
