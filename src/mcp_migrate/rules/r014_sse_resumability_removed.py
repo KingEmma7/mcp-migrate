@@ -72,14 +72,21 @@ class SSEResumabilityRemoved(Rule):
     def _check_ts(self, project: Project) -> list[Finding]:
         seen: set[tuple[str, int]] = set()
         out: list[Finding] = []
+        surface = mcp_surface_paths(project)
         # The header half stays case-sensitive on purpose: it matches a
         # quoted string, and both spellings servers actually send are
         # already listed in TS_HEADER_RX.
-        for pattern, search, flags in (
-            (TS_CODE_RX, project.search_code, TS_CODE_FLAGS),
-            (TS_HEADER_RX, project.search_wire, 0),
+        for pattern, search, flags, gated in (
+            (TS_CODE_RX, project.search_code, TS_CODE_FLAGS, False),
+            (TS_HEADER_RX, project.search_wire, 0, True),
         ):
             for f, line, text in search(pattern, flags=flags):
+                # As on Python, an ordinary /chat/events route can read this
+                # header beside an MCP server in another file (PR #335).
+                # Only header matches need same-file MCP context; preserve
+                # existing identifier detection even without that context.
+                if gated and f.path not in surface:
+                    continue
                 key = (str(f.path), line)
                 if key in seen:
                     continue
